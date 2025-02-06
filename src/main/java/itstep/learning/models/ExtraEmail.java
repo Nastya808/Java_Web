@@ -1,8 +1,6 @@
 package itstep.learning.models;
 
-
-public class ExtraEMail {
-
+public class ExtraEmail {
     private String extraMail;
 
     public String getExtraMail() {
