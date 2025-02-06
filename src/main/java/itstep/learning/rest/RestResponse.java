@@ -1,10 +1,18 @@
 package itstep.learning.rest;
 
+import java.util.Map;
+
 public class RestResponse {
+
     private int status;
     private String message;
+    private String resourceUrl;//Resource identification in requests: Individual resources are identified in requests using URIs.
+    private Map<String,String> meta;
+    private long cashTime;     //seconds
+    private Object data;
 
     public int getStatus() {
+
         return status;
     }
 
@@ -14,6 +22,7 @@ public class RestResponse {
     }
 
     public String getMessage() {
+
         return message;
     }
 
@@ -21,4 +30,57 @@ public class RestResponse {
         this.message = message;
         return this;
     }
+
+    public String getResourceUrl(){
+
+
+        return resourceUrl;
+    }
+
+    public RestResponse setResourceUrl(String resourceUrl){
+
+        this.resourceUrl=resourceUrl;
+        return this;
+
+    }
+
+    public long getCashTime(){
+
+        return cashTime;
+
+    }
+
+    public RestResponse setCashTime(long cashTime){
+
+        this.cashTime=cashTime;
+        return this;
+
+    }
+
+    public Map<String,String> getMeta(){
+
+        return meta;
+
+    }
+
+    public RestResponse setMeta(Map<String,String> meta){
+
+        this.meta=meta;
+        return this;
+
+    }
+
+    public RestResponse setData(Object data){
+        this.data=data;
+        return this;
+    }
+
+    public Object getData(){
+
+
+        return data;
+
+    }
+
+
 }
