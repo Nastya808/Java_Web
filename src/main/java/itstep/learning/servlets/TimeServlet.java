@@ -31,6 +31,7 @@ public class TimeServlet extends HttpServlet {
         this.timeService = timeService;
     }
 
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Timestamp time = new Timestamp(timeService.getTimestamp().getTime());
