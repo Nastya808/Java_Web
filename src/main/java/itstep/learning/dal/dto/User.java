@@ -1,12 +1,28 @@
 package itstep.learning.dal.dto;
 
 import java.util.UUID;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class User {
+
     private UUID userId;
     private String name;
-    private String email;
     private String phone;
+    private String emil;
+
+    public static User froResulSet(ResultSet rs) throws SQLException {
+
+        User user = new User();
+
+        user.setUserId(UUID.fromString(rs.getString("userId")));
+        user.setName(rs.getString("name"));
+        user.setEmil(rs.getString("email"));
+        user.setPhone(rs.getString("phone"));
+
+        return user;
+
+    }
 
     public UUID getUserId() {
         return userId;
@@ -24,12 +40,12 @@ public class User {
         this.name = name;
     }
 
-    public String getEmail() {
-        return email;
+    public String getEmil() {
+        return emil;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setEmil(String emil) {
+        this.emil = emil;
     }
 
     public String getPhone() {
@@ -39,4 +55,5 @@ public class User {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+
 }

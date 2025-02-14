@@ -7,7 +7,7 @@ public class UserSignUpFormModel {
     private String name;
     private String email;
     private ArrayList<String> extraEmails;
-    private ArrayList<String> phones;
+    private String phone;
     private String password;
     private Date dob;
     private String city;
@@ -15,7 +15,6 @@ public class UserSignUpFormModel {
 
     public UserSignUpFormModel() {
         this.extraEmails = new ArrayList<>();
-        this.phones = new ArrayList<>();
     }
 
     public String getLogin() { return login; }
@@ -39,6 +38,11 @@ public class UserSignUpFormModel {
     public ArrayList<String> getExtraEmails() { return extraEmails; }
     public void setExtraEmails(ArrayList<String> extraEmails) { this.extraEmails = extraEmails; }
 
-    public ArrayList<String> getPhones() { return phones; }
-    public void setPhones(ArrayList<String> phones) { this.phones = phones; }
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 }

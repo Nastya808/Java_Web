@@ -10,9 +10,12 @@ import itstep.learning.services.kdf.KdfService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -22,69 +25,146 @@ public class UserDao {
 
     private final Connection connection;
     private final Logger logger;
+    private final KdfService kdfService;
+    private final DbService dbService;
 
     @Inject
-    public UserDao(DbService dbService, Logger logger) throws SQLException {
+    public UserDao(KdfService kdfService, DbService dbService, Logger logger) throws SQLException {
+
+        this.dbService = dbService;
         this.connection = dbService.getConnection();
-        this.logger=logger;
+        this.logger = logger;
+        this.kdfService = kdfService;
     }
-
-    public User addUser ( UserSignUpFormModel userModel) {
-        User user = new User();
-        user.setUserId(UUID.randomUUID());
-        user.setName(userModel.getName());
-        user.setEmail(userModel.getEmail());
-       // user.setPhone( userModel.getPhones());
-
-        String sql = "INSERT INTO users(user_id, name, email, phone)"
-                + " VALUES (?, ?, ?, ?)";
-        try (PreparedStatement prep = this.connection.prepareStatement( sql)) {
-            prep.setString(1, user.getUserId().toString());
-            prep.setString(2, user.getName());
-            prep.setString(3, user.getEmail());
-            prep.setString(4, user.getPhone());
-
-
-        } catch (SQLException ex) {
-
-            logger.warning("UserDao::addUsers " + ex.getMessage());
-            return null;
-
-        }
-        sql = "INSERT INTO users_access (user_access_id, user_id, role_id, login, salt, dk)"
-                + " VALUES (UUID(), ?, 'guest' ,?, ?, ?)";
-        try (PreparedStatement prep = this.connection.prepareStatement( sql)) {
-            prep.setString(1, user.getUserId().toString());
-            prep.setString(2, user.getEmail());
-            String salt = UUID.randomUUID().toString().substring(0, 16);
-            prep.setString(3, salt);
-            //prep.setString(4, kdfService.dk (userModel.getPassword(), salt));
-            this.connection.setAutoCommit(false);
-            prep.executeUpdate();
-            this.connection.commit();
-
-        } catch (SQLException ex) {
-
-            logger.warning("UserDao::addUsers " + ex.getMessage());
-            try {this.connection.rollback();} catch (SQLException ex1) {}
-            return null;
-
-        }
-        return user;
-    }
-
-
 
     public boolean installTables() {
 
-        return installUsers()&&installUsersAccess();
+        return installUsers() && installUsersAccess() && installRole();
 
     }
 
+    public User addUser(UserSignUpFormModel userModel) {
+
+        User user = new User();
+        user.setUserId(UUID.randomUUID());
+        user.setEmil(userModel.getEmail());
+        user.setName(userModel.getName());
+        user.setPhone(userModel.getPhone());
+
+        String sql = "INSERT INTO users (userId, name, email, phone)" +
+
+                "VALUES(?, ?, ?, ?)";
+
+        try (PreparedStatement prep = this.connection.prepareStatement(sql)) {
+            this.connection.setAutoCommit(false);
+            prep.setString(1, user.getUserId().toString());
+            prep.setString(2, user.getName());
+            prep.setString(3, user.getEmil());
+            prep.setString(4, user.getPhone());
+
+            prep.executeUpdate();
+
+        } catch (SQLException ex) {
+
+            logger.warning("UserDao::addUser 1 " + ex.getMessage());
+            try {
+                this.connection.rollback();
+            } catch (SQLException e) {
+
+                e.printStackTrace();
+            }
+            return null;
+
+        }
+
+        sql = "INSERT INTO user_access (user_access_id, user_id, role_id, login, salt, dk )" +
+
+                "VALUES(UUID(),?,'guest', ?, ?, ?)";
+        try (PreparedStatement prep = this.dbService.getConnection().prepareStatement(sql)) {
+
+            prep.setString(1, user.getUserId().toString());
+            prep.setString(2, user.getEmil());
+            String salt = UUID.randomUUID().toString().substring(0, 16);
+            prep.setString(3, salt);
+            prep.setString(4, kdfService.dk(userModel.getPassword(), salt));
+            prep.executeUpdate();
+            this.dbService.getConnection().commit();
+
+        } catch (SQLException ex) {
+
+            logger.warning("UserDao::addUser 2 " + ex.getMessage());
+            try {
+                this.connection.rollback();
+            } catch (SQLException e) {
+
+                e.printStackTrace();
+            }
+            return null;
+
+        }
+
+        return user;
+    }
+
+    public User autorize(String login, String pass) {
+
+        String sql = "select * from user_access ua "
+                + "join users u on ua.user_id=u.userId "
+                + "where ua.login = ? ";
+
+        try (PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
+
+            prep.setString(1, login);
+
+            ResultSet rs = prep.executeQuery();
+            if (rs.next()) {
+
+                String dk = kdfService.dk(pass, rs.getString("salt"));
+                if (Objects.equals(dk, rs.getString("dk"))) {
+
+                    return User.froResulSet(rs);
+
+                }
+
+            }
+        } catch (SQLException ex) {
+
+            logger.log(Level.WARNING,"UserDao::autorize {0}" ,ex.getMessage());
+
+        }
+        return null;
+
+    }
+
+    private boolean installRole() {
+
+        String sql = "CREATE TABLE IF NOT EXISTS users_roles("
+                + "rolesId  CHAR(36)     PRIMARY KEY DEFAULT( UUID() ),"
+                + "user_id  CHAR(36)       NOT NULL,"
+                + "role   VARCHAR(16)      NOT NULL,"
+                + "canCreate INT DEFAULT(false),"
+                + "canRead   INT DEFAULT(false),"
+                + "canUpdate INT DEFAULT(false),"
+                + "canDelete INT DEFAULT(false),"
+                + "description   VARCHAR(256)     NULL"
+                + ") Engine = InnoDB, DEFAULT CHARSET = utf8mb4";
+        try (Statement statement = connection.createStatement()) {
+
+            statement.executeUpdate(sql);
+            logger.info("installRole Ok");
+            return true;
+
+        } catch (SQLException ex) {
+
+            logger.warning("UserDao::installRole " + ex.getCause());
+            return false;
+
+        }
+    }
 
     private boolean installUsersAccess() {
 
-        String sql = "CREATE TABLE IF NOT EXISTS users("
+        String sql = "CREATE TABLE IF NOT EXISTS user_access("
                 + "user_access_id  CHAR(36)     PRIMARY KEY DEFAULT( UUID() ),"
                 + "user_id  CHAR(36)       NOT NULL,"
                 + "login    VARCHAR(128)   NOT NULL,"
@@ -108,8 +188,6 @@ public class UserDao {
         }
 
     }
-
-
 
     private boolean installUsers() {
 
