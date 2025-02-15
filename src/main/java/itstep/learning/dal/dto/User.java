@@ -5,27 +5,25 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class User {
-
     private UUID userId;
     private String name;
     private String phone;
     private String emil;
 
+    public User() {
+    }
+
     public static User froResulSet(ResultSet rs) throws SQLException {
-
         User user = new User();
-
         user.setUserId(UUID.fromString(rs.getString("userId")));
         user.setName(rs.getString("name"));
         user.setEmil(rs.getString("email"));
         user.setPhone(rs.getString("phone"));
-
         return user;
-
     }
 
     public UUID getUserId() {
-        return userId;
+        return this.userId;
     }
 
     public void setUserId(UUID userId) {
@@ -33,7 +31,7 @@ public class User {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
@@ -41,7 +39,7 @@ public class User {
     }
 
     public String getEmil() {
-        return emil;
+        return this.emil;
     }
 
     public void setEmil(String emil) {
@@ -49,11 +47,10 @@ public class User {
     }
 
     public String getPhone() {
-        return phone;
+        return this.phone;
     }
 
     public void setPhone(String phone) {
         this.phone = phone;
     }
-
 }

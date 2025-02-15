@@ -8,18 +8,23 @@ import java.util.Random;
 
 @Singleton
 public class UtilRandomService implements RandomService {
-
     private final TimeService timeService;
-    private final Random random;
+    private final Random random = new Random();
 
     @Inject
     public UtilRandomService(TimeService timeService) {
         this.timeService = timeService;
-        this.random = new Random(timeService.getSeed()); // Ініціалізація генератора з сидом
     }
 
-    @Override
     public int randomInt() {
-        return random.nextInt(1000); // Генерація випадкового числа від 0 до 999
+        return random.nextInt(1000);
+    }
+
+    public String noRestrictionsStr(int length) {
+        return new RandomString().noRestrictionsStr(length);
+    }
+
+    public String fileNameRandomStr(int length) {
+        return new RandomString().fileNameRandomStr(length);
     }
 }

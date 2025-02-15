@@ -2,6 +2,7 @@ package itstep.learning.dal.dto;
 
 import java.util.UUID;
 
+
 public class UserAccess {
     private UUID userAccessId;
     private UUID userId;
@@ -10,8 +11,11 @@ public class UserAccess {
     private String dk;
     private String roleId;
 
+    public UserAccess() {
+    }
+
     public UUID getUserAccessId() {
-        return userAccessId;
+        return this.userAccessId;
     }
 
     public void setUserAccessId(UUID userAccessId) {
@@ -19,7 +23,7 @@ public class UserAccess {
     }
 
     public UUID getUserId() {
-        return userId;
+        return this.userId;
     }
 
     public void setUserId(UUID userId) {
@@ -27,7 +31,7 @@ public class UserAccess {
     }
 
     public String getLogin() {
-        return login;
+        return this.login;
     }
 
     public void setLogin(String login) {
@@ -35,7 +39,7 @@ public class UserAccess {
     }
 
     public String getSalt() {
-        return salt;
+        return this.salt;
     }
 
     public void setSalt(String salt) {
@@ -43,7 +47,7 @@ public class UserAccess {
     }
 
     public String getDk() {
-        return dk;
+        return this.dk;
     }
 
     public void setDk(String dk) {
@@ -51,7 +55,7 @@ public class UserAccess {
     }
 
     public String getRoleId() {
-        return roleId;
+        return this.roleId;
     }
 
     public void setRoleId(String roleId) {

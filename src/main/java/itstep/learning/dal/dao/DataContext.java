@@ -4,26 +4,21 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Logger;
 
-import com.google.inject.Injector;
-import itstep.learning.services.db.DbService;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
+import java.sql.SQLException;
 
 @Singleton
 public class DataContext {
-    private final Connection connection;
-    private final UserDao userDao;
-    private final Injector injector;
+    private UserDao userDao;
 
     @Inject
-    public DataContext(DbService dbService, Logger logger, Injector injector) throws SQLException {
-        this.connection = dbService.getConnection();
-        userDao = injector.getInstance(UserDao.class);
-        this.injector = injector;
+    public DataContext(Injector injector) throws SQLException {
+        this.userDao = (UserDao)injector.getInstance(UserDao.class);
     }
 
     public UserDao getUserDao() {
-        return userDao;
+        return this.userDao;
     }
-
 }

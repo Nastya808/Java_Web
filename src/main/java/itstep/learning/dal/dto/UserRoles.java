@@ -2,8 +2,8 @@ package itstep.learning.dal.dto;
 
 import java.util.UUID;
 
-public class UserRoles {
 
+public class UserRoles {
     private UUID rolesId;
     private UUID userId;
     private String description;
@@ -13,8 +13,11 @@ public class UserRoles {
     private int canUpdate;
     private int canDelete;
 
+    public UserRoles() {
+    }
+
     public UUID getRolesId() {
-        return rolesId;
+        return this.rolesId;
     }
 
     public void setRolesId(UUID rolesId) {
@@ -22,7 +25,7 @@ public class UserRoles {
     }
 
     public UUID getUserId() {
-        return userId;
+        return this.userId;
     }
 
     public void setUserId(UUID userId) {
@@ -30,7 +33,7 @@ public class UserRoles {
     }
 
     public String getDescription() {
-        return description;
+        return this.description;
     }
 
     public void setDescription(String description) {
@@ -38,7 +41,7 @@ public class UserRoles {
     }
 
     public String getRole() {
-        return role;
+        return this.role;
     }
 
     public void setRole(String role) {
@@ -46,7 +49,7 @@ public class UserRoles {
     }
 
     public int getCanCreate() {
-        return canCreate;
+        return this.canCreate;
     }
 
     public void setCanCreate(int canCreate) {
@@ -54,7 +57,7 @@ public class UserRoles {
     }
 
     public int getCanRead() {
-        return canRead;
+        return this.canRead;
     }
 
     public void setCanRead(int canRead) {
@@ -62,7 +65,7 @@ public class UserRoles {
     }
 
     public int getCanUpdate() {
-        return canUpdate;
+        return this.canUpdate;
     }
 
     public void setCanUpdate(int canUpdate) {
@@ -70,11 +73,10 @@ public class UserRoles {
     }
 
     public int getCanDelete() {
-        return canDelete;
+        return this.canDelete;
     }
 
     public void setCanDelete(int canDelete) {
         this.canDelete = canDelete;
     }
-
 }
