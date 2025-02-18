@@ -6,9 +6,9 @@ public class RestResponse {
 
     private int status;
     private String message;
-    private String resourceUrl;//Resource identification in requests: Individual resources are identified in requests using URIs.
+    private String resourceUrl;
     private Map<String,String> meta;
-    private long cashTime;     //seconds
+    private long cashTime;
     private Object data;
 
     public int getStatus() {
