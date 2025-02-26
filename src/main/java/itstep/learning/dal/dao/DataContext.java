@@ -9,16 +9,24 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import java.sql.SQLException;
 
+
 @Singleton
 public class DataContext {
     private UserDao userDao;
+    private AccessTokenDao accessTokenDao;
 
     @Inject
-    public DataContext(Injector injector) throws SQLException {
-        this.userDao = (UserDao)injector.getInstance(UserDao.class);
+    public DataContext(Injector injector,AccessTokenDao accessTokenDao) throws SQLException {
+        this.userDao = injector.getInstance(UserDao.class);
+        this.accessTokenDao=accessTokenDao;
+
     }
 
     public UserDao getUserDao() {
-        return this.userDao;
+        return userDao;
     }
+    public AccessTokenDao getAccessTokenDao() {
+        return accessTokenDao;
+    }
+
 }

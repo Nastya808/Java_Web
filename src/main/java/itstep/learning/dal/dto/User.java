@@ -16,6 +16,9 @@ public class User {
     private int age;
     private double money;
     private String email;
+    private java.util.Date deleteMoment;
+
+
 
 
     public static User froResulSet(ResultSet rs) throws SQLException {
@@ -30,10 +33,22 @@ public class User {
         user.setAge(rs.getInt("age"));
         user.setMoney(rs.getFloat("money"));
         user.setEmail(rs.getString("email"));
+        java.sql.Timestamp timestamp=rs.getTimestamp("delete_moment");
+        user.setDeleteMoment(timestamp==null?null:new Date(timestamp.getTime()));
 
         return user;
 
     }
+
+
+    public Date getDeleteMoment() {
+        return deleteMoment;
+    }
+
+    public void setDeleteMoment(Date deleteMoment) {
+        this.deleteMoment = deleteMoment;
+    }
+
 
     public Date getDofb() {
         return dofb;

@@ -8,13 +8,23 @@ import itstep.learning.services.db.DbService;
 import itstep.learning.services.kdf.KdfService;
 
 
-import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
+
 
 @Singleton
 public class UserDao {
@@ -45,6 +55,65 @@ public class UserDao {
 
     }
 
+    public CompletableFuture deleteAsync(User user) {
+
+        String sql = String.format(
+                "UPDATE users SET delete_moment=CURRENT_TIMESTAMP,"
+                        + "name='', email='', city='', age=0, dateOfB=NULL, money=0, phone='' WHERE userId = '%s'",
+                user.getUserId().toString());
+
+        String sql1 = String.format("UPDATE user_access SET ua_delete_dt=CURRENT_TIMESTAMP,"
+                        + " login=UUID() WHERE user_id = '%s'",
+                user.getUserId().toString());
+
+        CompletableFuture task1 = CompletableFuture.runAsync(() -> {
+
+            try (Statement stmt = dbService.getConnection().createStatement()) {
+                stmt.executeUpdate(sql);
+
+            } catch (SQLException ex) {
+
+                logger.log(Level.WARNING, "UserDao::Delete user {0},{1}",
+                        new Object[] { ex.getMessage(), sql });
+                try {
+                    dbService.getConnection().rollback();
+                } catch (SQLException ignore) {
+                }
+                ;
+            }
+
+        });
+
+        CompletableFuture task2 = CompletableFuture.runAsync(() -> {
+
+            try (Statement stmt = dbService.getConnection().createStatement()) {
+                stmt.executeUpdate(sql1);
+
+            } catch (SQLException ex) {
+
+                logger.log(Level.WARNING, "UserDao::Delete access {0},{1}",
+                        new Object[] { ex.getMessage(), sql1 });
+                try {
+                    dbService.getConnection().rollback();
+                } catch (SQLException ignore) {
+                }
+                ;
+            }
+
+        });
+
+        return CompletableFuture.allOf(task1, task2).thenRun(() -> {
+
+            try {
+                dbService.getConnection().commit();
+            } catch (SQLException ignore) {
+
+            }
+
+        });
+
+    }
+
     public boolean upDate(User user) {
 
         Map<String, Object> data = new HashMap<>();
@@ -54,33 +123,110 @@ public class UserDao {
         if (user.getPhone() != null) {
             data.put("phone", user.getPhone());
         }
+        if (user.getCity() != null) {
+            data.put("city", user.getCity());
+        }
+        if (user.getDofb() != null) {
+            data.put("dateOfB", user.getDofb());
+        }
+        if (user.getAge() != 0) {
+            data.put("age", user.getAge());
+        }
+        if (user.getMoney() != 0) {
+            data.put("money", user.getMoney());
+        }
+
+        if (!user.getEmail().isBlank() && user.getEmail() != null) {
+            data.put("email", user.getEmail());
+        }
+
         if (data.isEmpty())
             return true;// ?
-        // TODO concert to string builder
-        String sql = "UPDATE users SET ";
+
+        StringBuilder userUpdate = new StringBuilder("UPDATE users SET ");// sql ="UPDATE users SET " ;
         boolean isFirst = true;
         for (Map.Entry<String, Object> entry : data.entrySet()) {
 
             if (isFirst)
                 isFirst = false;
             else
-                sql += ",";
-            sql += entry.getKey() + " = ? ";
+                userUpdate.append(", ");
+            userUpdate.append(entry.getKey());
+            userUpdate.append("= ?");
         }
-        sql += " WHERE userId = ? ";
-        try (PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
-            int param = 1;
-            for (Map.Entry<String, Object> entry : data.entrySet()) {
-                prep.setObject(param, entry.getValue());
-                param++;
-            }
-            prep.setString(param, "user.getUserId().toString");
-            prep.execute();
-            return true;
-        } catch (SQLException ex) {
+        userUpdate.append(" WHERE userId = ?");
 
-            logger.log(Level.WARNING, "UserDao::getUserByid Parse error {0},{1}",
-                    new Object[] { ex.getMessage(), sql });
+        if (!user.getEmail().isBlank()) {
+
+            String userAccessUpdateEmail = String.format("UPDATE user_access SET login= ? WHERE user_id = '%s'",
+                    user.getUserId().toString());
+
+            Future<Boolean> task = CompletableFuture.supplyAsync(() -> {
+
+                try (PreparedStatement prep = dbService.getConnection().prepareStatement(userAccessUpdateEmail)) {
+
+                    prep.setString(1, user.getEmail());
+                    prep.execute();
+                    return true;
+                } catch (SQLException ex) {
+
+                    logger.log(Level.WARNING, "UserDao::User access  error {0},{1}",
+                            new Object[] { ex.getMessage(), userAccessUpdateEmail });
+                }
+                return false;
+            });
+
+            Future<Boolean> task1 = CompletableFuture.supplyAsync(() -> {
+
+                try (PreparedStatement prep = dbService.getConnection().prepareStatement(userUpdate.toString())) {
+                    int param = 1;
+                    for (Map.Entry<String, Object> entry : data.entrySet()) {
+                        prep.setObject(param, entry.getValue());
+                        param += 1;
+                    }
+                    prep.setString(param, user.getUserId().toString());
+                    prep.execute();
+                    return true;
+                } catch (SQLException ex) {
+
+                    logger.log(Level.WARNING, "UserDao::users error {0},{1}",
+                            new Object[] { ex.getMessage(), userUpdate });
+                }
+                return false;
+            });
+
+            try {
+                boolean res1 = task.get();
+                boolean res2 = task1.get();
+                try {
+                    dbService.getConnection().commit();
+                } catch (SQLException ignore) {
+                }
+                ;
+                return res1 && res2;
+            } catch (Exception e) {
+
+                logger.log(Level.WARNING, "The super puper Async User update {0}", e.getMessage());
+                return false;
+            }
+        } else {
+
+            try (PreparedStatement prep = dbService.getConnection().prepareStatement(userUpdate.toString())) {
+                int param = 1;
+                for (Map.Entry<String, Object> entry : data.entrySet()) {
+                    prep.setObject(param, entry.getValue());
+                    param += 1;
+                }
+                prep.setString(param, user.getUserId().toString());
+                prep.execute();
+                dbService.getConnection().commit();
+                return true;
+            } catch (SQLException ex) {
+
+                logger.log(Level.WARNING, "UserDao::getUserByid Parse error {0},{1}",
+                        new Object[] { ex.getMessage(), userUpdate });
+            }
+
         }
         return false;
 
@@ -107,9 +253,25 @@ public class UserDao {
 
     public boolean installTables() {
 
-        return installUsers() && installUsersAccess() && installRole();
+        Future<Boolean> task1 = CompletableFuture.supplyAsync(this::installUsersAccess);
+        Future<Boolean> task2 = CompletableFuture.supplyAsync(this::installUsers);
+        try {
+            boolean res1 = task1.get();
+            boolean res2 = task2.get();
+            try {
+                dbService.getConnection().commit();
+            } catch (SQLException ignore) {
+            }
+            ;
+            return res1 && res2;
+        } catch (Exception e) {
+
+            logger.log(Level.WARNING, "The super puper Async {0}", e.getMessage());
+            return false;
+        }
 
     }
+
     private boolean installUsers() {
 
         String sql = "CREATE TABLE IF NOT EXISTS users("
@@ -117,9 +279,10 @@ public class UserDao {
                 + "name    VARCHAR(128) NOT NULL,"
                 + "phone   VARCHAR(32)  NOT NULL,"
                 + "city    VARCHAR(20)  NOT NULL,"
-                + "dateOfB DATE         NOT NULL,"
+                + "dateOfB DATE             NULL,"
                 + "age     INT              NULL,"
                 + "money   DOUBLE (10,2)    NULL,"
+                + "delete_moment   DATETIME NULL,"
                 + "email   VARCHAR(256) NOT NULL"
                 + ") Engine = InnoDB, DEFAULT CHARSET = utf8mb4";
 
@@ -137,6 +300,7 @@ public class UserDao {
         }
 
     }
+
     public User addUser(UserSignUpFormModel userModel) {
 
         User user = new User();
@@ -154,7 +318,6 @@ public class UserDao {
                 "VALUES(?, ?, ?, ?,?,?,?,?)";
 
         try (PreparedStatement prep = this.connection.prepareStatement(sql)) {
-            this.connection.setAutoCommit(false);
             prep.setString(1, user.getUserId().toString());
             prep.setString(2, user.getName());
             prep.setString(3, user.getPhone());
@@ -273,6 +436,7 @@ public class UserDao {
                 + "salt   VARCHAR(16)      NOT  NULL,"
                 + "role_id   VARCHAR(16)   NOT  NULL,"
                 + "dk   VARCHAR(20)        NOT NULL,"
+                + "ua_delete_dt  DATETIME   NULL,"
                 + "UNIQUE(login)"
                 + ") Engine = InnoDB, DEFAULT CHARSET = utf8mb4";
 
@@ -290,7 +454,4 @@ public class UserDao {
         }
 
     }
-
-
-
 }
