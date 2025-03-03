@@ -10,7 +10,7 @@ import java.util.UUID;
 public class AccessToken {
     private UUID userAccessId;
     private Date issuedAt;
-    private Date expiresdAt;
+    private Date expiresAt;
     private UUID accessTokenId;
 
     public static AccessToken FromResultSet(ResultSet rs) throws SQLException {
@@ -29,7 +29,7 @@ public class AccessToken {
         timestamp = rs.getTimestamp("expires_at");
         if (timestamp != null) {
 
-            token.setExpiresdAt(new Date(timestamp.getTime()));
+            token.setExpiresAt(new Date(timestamp.getTime()));
         }
         return token;
 
@@ -59,12 +59,12 @@ public class AccessToken {
         this.issuedAt = issuedAt;
     }
 
-    public Date getExpiresdAt() {
-        return expiresdAt;
+    public Date getExpiresAt() {
+        return expiresAt;
     }
 
-    public void setExpiresdAt(Date expiresdAt) {
-        this.expiresdAt = expiresdAt;
+    public void setExpiresAt(Date expiresAt) {
+        this.expiresAt = expiresAt;
     }
 
 }
