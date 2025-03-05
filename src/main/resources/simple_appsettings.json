@@ -1,0 +1,19 @@
+{
+
+  "db":{
+    "MySql":{
+      "dbms":"mySql",
+      "host":"Your host",
+      "port":"Port",
+      "schema":"Your db name",
+      "params":"useUnicode=true&characterEncoding=UTF-8",
+      "user":"UserName",
+      "password":"Your pssword DB",
+      "autocommit":false
+    }
+  },
+  "token":{
+
+    "lifetime":300
+  }
+}

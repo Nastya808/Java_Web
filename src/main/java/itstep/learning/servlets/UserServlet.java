@@ -6,7 +6,6 @@ import java.util.Map;
 
 import itstep.learning.dal.dao.DataContext;
 import itstep.learning.dal.dto.User;
-import itstep.learning.models.UserSignUpFormModel;
 import itstep.learning.rest.RestResponse;
 import itstep.learning.rest.RestService;
 import com.google.inject.Inject;
@@ -19,19 +18,26 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import itstep.learning.dal.dto.AccessToken;
+import itstep.learning.dal.dto.UserAccess;
+import itstep.learning.models.UserAuthViewModel;
+import itstep.learning.services.hash.HashService;
 
 
 @Singleton
 public class UserServlet extends HttpServlet {
     private final DataContext dataContext;
     private final RestService restService;
+    private final HashService hashService;
     private final Logger logger;
 
     @Inject
-    public UserServlet(Logger logger, DataContext dataContext, RestService restService) {
+    public UserServlet(Logger logger, HashService hashService, DataContext dataContext, RestService restService) {
         this.dataContext = dataContext;
         this.restService = restService;
+        this.hashService = hashService;
         this.logger=logger;
+
     }
 
     @Override
@@ -45,6 +51,7 @@ public class UserServlet extends HttpServlet {
                         "update", "PUT /user",
                         "delete", "DELETE /user"));
 
+        // check Authorization
         String authHeader = req.getHeader("Authorization");
 
         if (authHeader == null) {
@@ -83,15 +90,33 @@ public class UserServlet extends HttpServlet {
 
         }
 
-        User user = dataContext.getUserDao().autorize(parts[0], parts[1]);
+        UserAccess userAccess = dataContext.getUserDao().authorize(parts[0], parts[1]);
 
-        if (user == null) {
+        if (userAccess == null) {
             restService.sendResponse(res, restResponse.setStatus(401)
                     .setData("Credentials rejected"));
             return;
         }
 
-        restResponse.setCashTime(600).setStatus(200).setData(user);
+        // Create token for user
+
+        AccessToken token;
+        if (!dataContext.getAccessTokenDao().prolonge(userAccess.getUserAccessId().toString())) {
+
+            token = dataContext.getAccessTokenDao().create(userAccess);
+        } else {
+
+            token = dataContext.getAccessTokenDao().getTAccessToken(userAccess.getUserAccessId().toString());
+        }
+
+        User user = dataContext.getUserDao().getUserById(userAccess.getUserId());
+
+
+        restResponse
+                .setCashTime(600)
+                .setStatus(200)
+                .setData(
+                        new UserAuthViewModel(user, userAccess, token));
         restService.sendResponse(res, restResponse);
 
     }
@@ -121,18 +146,17 @@ public class UserServlet extends HttpServlet {
         }
 
         User user = dataContext.getUserDao().getUserById(userUuid);
-        if(user==null){
+        if (user == null) {
 
             restService.sendResponse(resp, restResponse.setStatus(401).setData("Unauthorized"));
             return;
         }
 
-        try{
+        try {
             dataContext.getUserDao().deleteAsync(user).get();
-        }catch(InterruptedException | ExecutionException ex ){
+        } catch (InterruptedException | ExecutionException ex) {
 
-
-            logger.log(Level.SEVERE,"deleteAsync fail {0}", ex.getMessage());
+            logger.log(Level.SEVERE, "deleteAsync fail {0}", ex.getMessage());
             restService.sendResponse(resp, restResponse.setStatus(500).setData("See Server log"));
             return;
         }
@@ -154,6 +178,19 @@ public class UserServlet extends HttpServlet {
                         "read", "GET /user",
                         "update", "PUT /user",
                         "delete", "DELETE /user"));
+
+        // check token athorization
+
+        UserAccess userAccess = (UserAccess) req.getAttribute("AuthUserAccess");
+
+        if (userAccess == null) {
+            restService.sendResponse(resp,
+                    restResponse
+                            .setStatus(401)
+                            .setData(req.getAttribute("AuthStatus")));
+            return;
+
+        }
 
         User userUpdate;
         try {
