@@ -51,7 +51,6 @@ public class UserServlet extends HttpServlet {
                         "update", "PUT /user",
                         "delete", "DELETE /user"));
 
-        // check Authorization
         String authHeader = req.getHeader("Authorization");
 
         if (authHeader == null) {
@@ -179,7 +178,6 @@ public class UserServlet extends HttpServlet {
                         "update", "PUT /user",
                         "delete", "DELETE /user"));
 
-        // check token athorization
 
         UserAccess userAccess = (UserAccess) req.getAttribute("AuthUserAccess");
 

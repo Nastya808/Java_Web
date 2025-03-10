@@ -1,8 +1,14 @@
 package itstep.learning.ioc;
 
+import itstep.learning.services.authuser.jwt.JwtToken;
+import itstep.learning.services.authuser.jwt.JwtTokenService;
 import itstep.learning.services.config.JsonConfigService;
+import itstep.learning.services.form_parse.FormParseService;
+import itstep.learning.services.form_parse.MixedFormParseService;
 import itstep.learning.services.random.RandomService;
 import itstep.learning.services.config.ConfigService;
+import itstep.learning.services.storage.DiskStorageService;
+import itstep.learning.services.storage.StorageService;
 import itstep.learning.services.time.TimeService;
 import itstep.learning.services.time.UtilTimeService;
 import com.google.inject.AbstractModule;
@@ -25,5 +31,8 @@ public class ServiceConfig extends AbstractModule {
         bind(KdfService.class).to(PbKdf1Service.class);
         bind(DbService.class).to(MySqlDbService.class);
         bind(ConfigService.class).to(JsonConfigService.class);
+        bind(FormParseService.class).to(MixedFormParseService.class);
+        bind(StorageService.class).to(DiskStorageService.class);
+        bind(JwtToken.class).to(JwtTokenService.class);
     }
 }

@@ -3,10 +3,8 @@ package itstep.learning.ioc;
 import itstep.learning.filters.AuthFilter;
 import itstep.learning.filters.AuthJwtFilter;
 import itstep.learning.filters.CharSetFilter;
-import itstep.learning.servlets.HomeServlet;
+import itstep.learning.servlets.*;
 import com.google.inject.servlet.ServletModule;
-import itstep.learning.servlets.RandomServlet;
-import itstep.learning.servlets.UserServlet;
 
 public class ServletConfig extends ServletModule {
     @Override
@@ -17,6 +15,8 @@ public class ServletConfig extends ServletModule {
 
         serve("/home").with(HomeServlet.class);
         serve("/user").with(UserServlet.class);
+        serve("/product").with(ProductServlet.class);
+        serve("/storage/*").with(StorageServlet.class);
         serve("/random").with(RandomServlet.class);
     }
 }
