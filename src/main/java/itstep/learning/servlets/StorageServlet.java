@@ -3,6 +3,7 @@ package itstep.learning.servlets;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Logger;
 
 import itstep.learning.services.storage.StorageService;
 import com.google.inject.Inject;
@@ -17,20 +18,27 @@ import jakarta.servlet.http.HttpServletResponse;
 public class StorageServlet extends HttpServlet {
 
     private final StorageService storageService;
+    private final Logger logger;
 
     @Inject
-    public StorageServlet(StorageService storageService) {
+    public StorageServlet(Logger logger, StorageService storageService) {
         this.storageService = storageService;
+        this.logger = logger;
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         String fileId = req.getPathInfo().substring(1);
+        if (preliminaryСheck(fileId)) {
+
+            resp.setStatus(404);
+        }
+
         try (InputStream inputStream = storageService.get(fileId)) {
 
-            int dotPosition=fileId.lastIndexOf('.');
-            String ext=fileId.substring(dotPosition);
+            int dotPosition = fileId.lastIndexOf('.');
+            String ext = fileId.substring(dotPosition);
             resp.setContentType(mimeByExtention(ext));
             OutputStream writer = resp.getOutputStream();
             byte[] buf = new byte[131072];
@@ -48,6 +56,12 @@ public class StorageServlet extends HttpServlet {
     private String mimeByExtention(String ext) {
 
         switch (ext) {
+            case ".mp4":
+            case ".mpeg":
+            case ".ogv":
+            case ".webm":
+                return "video/" + ext.substring(1);
+
             case ".jpg":
                 ext = ".jpeg";
             case ".jpeg":
@@ -73,6 +87,34 @@ public class StorageServlet extends HttpServlet {
 
         }
 
+    }
+
+    private boolean preliminaryСheck(String fileId) {
+
+        if (!fileId.isBlank() && fileId.lastIndexOf('.') != -1) {
+
+            String[] part = fileId.split("\\.");
+
+            if (part[part.length - 1].length() >= 2) {
+                switch (part[part.length - 1]) {
+                    case "exe":
+                        return false;
+                    case "php":
+                        return false;
+                    case "py":
+                        return false;
+                    case "cgi":
+                        return false;
+                    case "sh":
+                        return false;
+                    default:
+                        return true;
+                }
+            }
+            return false;
+
+        }
+        return false;
     }
 
 }

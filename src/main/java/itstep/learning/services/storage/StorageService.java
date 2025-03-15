@@ -8,4 +8,6 @@ public interface StorageService {
     public String put(InputStream inputStream, String ext)throws IOException;
 
     public InputStream get(String itemId)throws IOException;
+
+    public boolean deleteImg(String path);
 }
