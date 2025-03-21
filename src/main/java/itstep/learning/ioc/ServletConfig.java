@@ -13,10 +13,12 @@ public class ServletConfig extends ServletModule {
         filter("/*").through(AuthFilter.class);
         filter("/*").through(AuthJwtFilter.class);
 
+
         serve("/home").with(HomeServlet.class);
         serve("/user").with(UserServlet.class);
         serve("/product").with(ProductServlet.class);
         serve("/storage/*").with(StorageServlet.class);
+        serve("/cart").with(CartServlet.class);
         serve("/random").with(RandomServlet.class);
     }
 }

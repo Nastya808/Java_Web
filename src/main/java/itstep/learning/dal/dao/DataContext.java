@@ -16,14 +16,19 @@ public class DataContext {
     private AccessTokenDao accessTokenDao;
     private CategoryDao categoryDao;
     private ProductDao productDao;
+    private CartDao cartDao;
+
+
 
     @Inject
-    public DataContext(ProductDao productDao, CategoryDao categoryDao, Injector injector, AccessTokenDao accessTokenDao)
+    public DataContext(ProductDao productDao,CartDao cartDao, CategoryDao categoryDao, Injector injector, AccessTokenDao accessTokenDao)
             throws SQLException {
         this.userDao = injector.getInstance(UserDao.class);
         this.accessTokenDao = accessTokenDao;
         this.categoryDao = categoryDao;
         this.productDao = productDao;
+        this.cartDao=cartDao;
+
 
     }
 
@@ -41,6 +46,10 @@ public class DataContext {
 
     public ProductDao getProductDao() {
         return productDao;
+    }
+
+    public CartDao getCartDao() {
+        return cartDao;
     }
 
 }
